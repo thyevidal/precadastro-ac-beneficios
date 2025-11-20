@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AC BENEFICIOS LTDA — Pré-cadastro</title>
+  <meta name="description" content="Pré-cadastro para prestadores de serviço, parceiros, ONGs e comunidade pet — AC BENEFICIOS LTDA." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="header-flex">
+      <div class="logo">AC</div>
+      <div>
+        <h1>AC BENEFICIOS LTDA — Pré-cadastro</h1>
+        <p class="lead">Cadastre sua organização, serviço ou iniciativa para fazer parte do ecossistema da causa animal. É gratuito — nossos critérios serão avaliados pela equipe.</p>
+      </div>
+    </header>
+
+    <form id="precadForm" novalidate>
+      <div>
+        <label for="org">Nome Social / Nome Fantasia</label>
+        <input id="org" name="org" type="text" placeholder="Ex: Maria / Casa dos Bichos" required />
+      </div>
+
+      <div>
+        <label for="contato">Nome da pessoa de contato</label>
+        <input id="contato" name="contato" type="text" placeholder="Ex: Maria Souza" required />
+      </div>
+
+      <div>
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" placeholder="contato@exemplo.com" required />
+      </div>
+
+      <div>
+        <label for="phone">Telefone / WhatsApp</label>
+        <input id="phone" name="phone" type="tel" placeholder="(11) 9xxxx-xxxx" />
+      </div>
+
+      <div>
+        <label for="cidade">Cidade + Estado</label>
+        <input id="cidade" name="cidade" type="text" placeholder="São Paulo - SP" />
+      </div>
+
+      <div class="full">
+        <label for="tipo">Tipo</label>
+        <select id="tipo" name="tipo" required>
+          <option value="">Selecione</option>
+          <option value="cliente">Cliente</option>
+          <option value="prestador">Prestador de serviço</option>
+          <option value="lojista">Lojista / Petshop</option>
+          <option value="ong">ONG / Instituição</option>
+          <option value="protetor">Protetor / Voluntário</option>
+          <option value="parceiro">Parceiro da causa animal</option>
+          <option value="patrocinador">Patrocinador</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+
+      <div class="full">
+        <label>Áreas de atuação / Serviços</label>
+        <div id="areasContainer" class="areas-grid"></div>
+      </div>
+
+      <!-- Dynamic other fields -->
+      <div id="dynamicFields" class="full" aria-live="polite"></div>
+
+      <div>
+        <label for="site">Website / Instagram</label>
+        <input id="site" name="site" type="url" placeholder="https://" />
+      </div>
+
+      <div id="logoWrapper">
+        <label for="arquivo">Logo / Documento (opcional, até 5MB)</label>
+        <input id="arquivo" name="arquivo" type="file" accept="image/*,.pdf" />
+        <small>Aceitamos JPG/PNG/PDF. Não envie dados sensíveis.</small>
+      </div>
+
+
+      <div class="full" id="descricaoWrapper">
+        <label for="descricao">Breve descrição (o que você faz / missão)</label>
+        <textarea id="descricao" name="descricao" placeholder="Fale em até 300 caracteres..." maxlength="800"></textarea>
+      </div>
+
+      <div class="full">
+        <label><input id="consent" name="consent" type="checkbox" required/> Concordo em fornecer os dados informados para análise e ser contactado pela AC BENEFICIOS LTDA conforme nossa <a href="#" id="policyLink">Política de Privacidade</a> em conformidade com a Lei Geral de Proteção de Dados (LGPD).</label>
+      </div>
+
+      <div class="full actions">
+        <button type="submit">Enviar pré-cadastro</button>
+        <button type="button" class="ghost" id="limpar">Limpar</button>
+        <small style="margin-left:auto">Campos com * são obrigatórios</small>
+      </div>
+
+      <div id="msg" class="full" aria-live="polite"></div>
+    </form>
+
+    <footer>
+      <p><strong>AC BENEFICIOS LTDA</strong> — Conectando serviços e iniciativas em favor da causa animal.</p>
+      <p>Quer que eu configure o envio das inscrições para um e-mail, Google Sheets, Netlify Forms ou crie um endpoint PHP simples? Posso ajudar.</p>
+    </footer>
+  </main>
+
+  <script src="precadastro.js" defer></script>
+</body>
+</html>
