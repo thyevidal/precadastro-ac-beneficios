@@ -347,7 +347,7 @@ tipo.addEventListener('change', (e)=>{
 });
 
 // === Atualize estes valores ===
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyUMD3n7C8Oxdyr2CQE4KwRWG9UnSEXj8xJ0BVOlgU0pxn3MOTQy_7ZTWryfcF1HIHw/exec'; // <<< cole a URL do seu deploy
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrGZi7wbnyRrBx2-kMiVkd6K_GCteJMQmeHiWWjZHYJJKfKtnsahukM8Wn_9q6wId-/exec'; // <<< cole a URL do seu deploy
 const CLIENT_TOKEN = 'vG3w7x_9Z'; // <<< cole o token se configurou; se não usar, deixe '' e defina USE_TOKEN=false no Apps Script
 
 // === handler de submit ===
@@ -400,11 +400,56 @@ form.addEventListener('submit', async (e) => {
   // token anti-spam (opcional)
   if (CLIENT_TOKEN && CLIENT_TOKEN.length > 0) data._client_token = CLIENT_TOKEN;
 
-  try {
+    try {
+    // desabilita botão para evitar envios duplicados
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.6';
+    }
+
+    // enviar como application/x-www-form-urlencoded para evitar preflight
+    const params = new URLSearchParams();
+    params.set('payload', JSON.stringify(data));
+
     const resp = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: params // browser define Content-Type: application/x-www-form-urlencoded; charset=UTF-8
     });
+
+    // reabilita botão
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '';
+    }
+
+    const json = await resp.json().catch(()=>null);
+
+    if (resp.ok) {
+      const arquivoUrl = (json && json.arquivoUrl) ? json.arquivoUrl : '';
+      let successMsg = '<div class="success">Pré-cadastro enviado com sucesso! Em breve entraremos em contato.</div>';
+      if (arquivoUrl) successMsg += `<div style="margin-top:8px"><small>Arquivo salvo: <a href="${arquivoUrl}" target="_blank" rel="noopener">${arquivoUrl}</a></small></div>`;
+      msg.innerHTML = successMsg;
+      form.reset();
+      clearAreasAndServices();
+      dynamic.innerHTML = '';
+      areasContainer.style.display = '';
+      logoWrapper.style.display = '';
+    } else {
+      console.error('Erro resposta', resp.status, json);
+      msg.innerHTML = '<div class="error">Erro ao enviar: '+ (json && json.error ? json.error : resp.status) +'</div>';
+    }
+  } catch (err) {
+    console.error(err);
+    // reabilita botão em caso de erro
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '';
+    }
+    msg.innerHTML = '<div class="error">Não foi possível conectar ao servidor do Google. Verifique a URL do Apps Script e se você publicou o deploy.</div>';
+  }
+
 
     const json = await resp.json().catch(()=>null);
     if (resp.ok) {
