@@ -403,7 +403,6 @@ form.addEventListener('submit', async (e) => {
   try {
     const resp = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
 
