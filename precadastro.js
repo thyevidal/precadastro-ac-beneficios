@@ -350,7 +350,7 @@ tipo.addEventListener('change', (e)=>{
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrGZi7wbnyRrBx2-kMiVkd6K_GCteJMQmeHiWWjZHYJJKfKtnsahukM8Wn_9q6wId-/exec'; // <<< cole a URL do seu deploy
 const CLIENT_TOKEN = 'vG3w7x_9Z'; // <<< cole o token se configurou; se não usar, deixe '' e defina USE_TOKEN=false no Apps Script
 
-// === handler de submit ===
+// === handler de submit (corrigido) ===
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   msg.innerHTML='';
@@ -400,15 +400,15 @@ form.addEventListener('submit', async (e) => {
   // token anti-spam (opcional)
   if (CLIENT_TOKEN && CLIENT_TOKEN.length > 0) data._client_token = CLIENT_TOKEN;
 
-    try {
+  // === envio (URLSearchParams para evitar preflight) ===
+  const submitBtn = form.querySelector('button[type="submit"]');
+  try {
     // desabilita botão para evitar envios duplicados
-    const submitBtn = form.querySelector('button[type="submit"]');
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.style.opacity = '0.6';
     }
 
-    // enviar como application/x-www-form-urlencoded para evitar preflight
     const params = new URLSearchParams();
     params.set('payload', JSON.stringify(data));
 
@@ -442,33 +442,14 @@ form.addEventListener('submit', async (e) => {
   } catch (err) {
     console.error(err);
     // reabilita botão em caso de erro
-    const submitBtn = form.querySelector('button[type="submit"]');
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.style.opacity = '';
     }
     msg.innerHTML = '<div class="error">Não foi possível conectar ao servidor do Google. Verifique a URL do Apps Script e se você publicou o deploy.</div>';
   }
-
-
-    const json = await resp.json().catch(()=>null);
-    if (resp.ok) {
-      msg.innerHTML = '<div class="success">Pré-cadastro enviado com sucesso! Em breve entraremos em contato.</div>';
-      form.reset();
-      clearAreasAndServices();
-      dynamic.innerHTML = '';
-      areasContainer.style.display = '';
-      logoWrapper.style.display = '';
-    } else {
-      console.error('Erro resposta', resp.status, json);
-      msg.innerHTML = '<div class="error">Erro ao enviar: '+ (json && json.error ? json.error : resp.status) +'</div>';
-    }
-  } catch (err) {
-    console.error(err);
-    msg.innerHTML = '<div class="error">Não foi possível conectar ao servidor do Google. Verifique a URL do Apps Script e se você publicou o deploy.</div>';
-  }
 });
-
+// === fim handler ===
 
 function clearAreasAndServices(){ areasContainer.innerHTML=''; areasContainer.style.display = ''; }
 limpar.addEventListener('click', ()=>{
