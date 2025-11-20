@@ -11,13 +11,13 @@ const descricaoWrapper = document.getElementById('descricaoWrapper');
 const AREAS = ['SAÚDE','ESTÉTICA','BEM-ESTAR','COMPORTAMENTAL','VIDA','SEGURANÇA','OUTROS'];
 
 const SERVICES = {
-  'SAÚDE': ['vacinas obrigatórias','vacinas','alimento natural','fisioterapia','internação','cirurgia','exames laboratoriais','exame de imagem','castração'],
-  'ESTÉTICA': ['grooming'],
-  'BEM-ESTAR': ['spar','táxi pet','pet walker','pet sitter','hospedagem','creche'],
-  'COMPORTAMENTAL': ['obediência','xixi coco legal','passeio','socialização','exposições'],
-  'VIDA': ['seguro pet','auxílio funerário'],
-  'SEGURANÇA': ['microchipagem','monitoramento de saúde','rastreamento'],
-  'OUTROS': ['ensaio fotográfico pet']
+  'SAÚDE': ['Vacinas Obrigatórias','Vacinas','Alimento Natural','Fisioterapia','Internação','Cirurgia','Exames Laboratoriais','Exame de Imagem','Castração'],
+  'ESTÉTICA': ['Grooming'],
+  'BEM-ESTAR': ['Spar','Táxi Pet','Pet Walker','Pet Sitter','Hospedagem','Creche'],
+  'COMPORTAMENTAL': ['Obediência','Xixi Coco Legal','Passeio','Socialização','Exposições'],
+  'VIDA': ['Seguro Pet','Auxílio Funerário'],
+  'SEGURANÇA': ['Microchipagem','Monitoramento de Saúde','Rastreamento'],
+  'OUTROS': ['Rnsaio Totográfico Pet']
 };
 
 const fieldsByType = {
