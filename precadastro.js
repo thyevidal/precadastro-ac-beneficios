@@ -1,4 +1,11 @@
-// precadastro.js (atualizado: "como descobriu" como select + campo 'Outros' por área)
+/* precadastro.js — versão substituta completa
+   Inclui:
+   - renderização de áreas/serviços (com 'Outros' por área)
+   - campos dinâmicos por tipo (cliente, prestador, ong, etc.)
+   - validação melhorada: lista o que falta e foca no primeiro inválido
+   - envio ao Apps Script (mantive sua lógica de URLSearchParams e base64)
+*/
+
 const form = document.getElementById('precadForm');
 const msg = document.getElementById('msg');
 const limpar = document.getElementById('limpar');
@@ -26,13 +33,12 @@ function capitalizeServiceName(text) {
     .join(' ');
 }
 
-
 const AREAS = ['SAÚDE','ESTÉTICA','BEM-ESTAR','COMPORTAMENTAL','VIDA','SEGURANÇA','OUTROS'];
 
 const SERVICES = {
   'SAÚDE': ['Vacinas Obrigatórias','Vacinas','Alimento Natural','Fisioterapia','Cirurgia','Exames Laboratoriais','Exame de Imagem','Castração', 'Serviços Ambulatoriais', 'Odontologia Veterinária', 'Internação', 'Atendimento Domiciliar'],
   'ESTÉTICA': ['Grooming', 'Banho e Tosa', 'Higienização', 'Corte de Unhas', 'Limpeza de Ouvidos', 'Hidratação e Tratamentos Especiais'],
-  'BEM-ESTAR': ['Spar','Pet Walker','Pet Sitter','Hospedagem','Creche', 'Day Care', 'Fitness e Exercícios', 'Terapias Alternativas'],
+  'BEM-ESTAR': ['Spa','Pet Walker','Pet Sitter','Hospedagem','Creche', 'Day Care', 'Fitness e Exercícios', 'Terapias Alternativas'],
   'COMPORTAMENTAL': ['Avaliação Comportamental','Adestramento - Básico','Adestramento - Avançado','Modificação do Comportamento','Treinamento de Filhotes (Puppy Class)','Educação Ambiental','Consultoria Comportamental Especializada','Treinamentos Específicos'],
   'VIDA': ['Seguro Pet','Auxílio Funerário'],
   'SEGURANÇA': ['Identificação e Rastreabilidade','Monitoramento e Rastreio','Controle de Acesso e Proteção em Casa', 'Transporte Seguro', 'Serviço de Busca e Resgate', 'Planos de Emergência'],
@@ -79,7 +85,10 @@ function slugify(text){
     .replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
 }
 
-function clearAreasAndServices(){ areasContainer.innerHTML = ''; }
+function clearAreasAndServices(){
+  areasContainer.innerHTML = '';
+  areasContainer.style.display = '';
+}
 
 /* Render areas only for non-cliente types */
 function renderAreasForType(type){
@@ -138,7 +147,6 @@ function renderAreasForType(type){
       span.className='service-caption';
       span.textContent = capitalizeServiceName(svc);
 
-
       // structure: label > input + box + caption
       chip.appendChild(input);
       chip.appendChild(box);
@@ -161,7 +169,6 @@ function renderAreasForType(type){
     });
 
     // --- special: add an "Outros" chip + texto associado (por área) ---
-    // This allows users to type an 'other' service for that area.
     (function addOutrosField(){
       const outrosKey = 'outros';
       const svcId = `${type}_service_${areaKey}_${outrosKey}`;
@@ -304,7 +311,7 @@ function renderOtherFields(type){
     qtdWrapper.appendChild(qtdInput);
     dynamic.appendChild(qtdWrapper);
 
-    // Como descobriu (select with options requested)
+    // Como descobriu (select com opções)
     const descWrapper = document.createElement('div');
     descWrapper.className = 'field full';
     const descLabel = document.createElement('label'); descLabel.textContent = 'Como descobriu a plataforma?';
@@ -342,44 +349,135 @@ function renderOtherFields(type){
   });
 }
 
-/* On type change: show/hide logo, render areas/fields */
-tipo.addEventListener('change', (e)=>{
-  const t = e.target.value;
+/* =================== VALIDAÇÃO AMPLIADA =================== */
 
-  // cliente doesn't see logo
-  if (t === 'cliente') {
-    logoWrapper.style.display = 'none';
-    descricaoWrapper.style.display = 'none';
-  } else {
-    logoWrapper.style.display = '';
-    descricaoWrapper.style.display = '';
+/**
+ * Tenta achar um rótulo legível para o elemento (label[for], label pai, .area-title, placeholder, name).
+ */
+function findLabelText(el) {
+  try {
+    // 1) label[for]
+    if (el.id) {
+      const lab = form.querySelector(`label[for="${el.id}"]`);
+      if (lab && lab.textContent) return lab.textContent.trim();
+    }
+    // 2) se input estiver dentro de <label>...</label>
+    const parentLabel = el.closest('label');
+    if (parentLabel && parentLabel.textContent) return parentLabel.textContent.trim();
+    // 3) se estiver em wrapper .field com um label
+    const fieldWrapper = el.closest('.field, .area-card, div');
+    if (fieldWrapper) {
+      // se for área, pegue .area-title
+      const areaTitle = fieldWrapper.querySelector('.area-title');
+      if (areaTitle && areaTitle.textContent) return areaTitle.textContent.trim();
+      const lab = fieldWrapper.querySelector('label');
+      if (lab && lab.textContent) return lab.textContent.trim();
+    }
+    // 4) fallback para placeholder / aria-label / name
+    return el.placeholder || el.getAttribute('aria-label') || el.name || el.type || 'Campo obrigatório';
+  } catch (err) {
+    return 'Campo obrigatório';
   }
+}
 
-  if (!t){
-    clearAreasAndServices();
-    dynamic.innerHTML = '';
-    areasContainer.style.display = '';
-    return;
-  }
+/**
+ * Retorna array de strings (rótulos) dos campos obrigatórios que estão inválidos / não preenchidos.
+ */
+function getMissingRequireds(formEl){
+  const missing = [];
+  const seen = new Set();
 
-  renderAreasForType(t);
-  renderOtherFields(t);
-});
+  const elements = Array.from(formEl.elements);
 
-// === Atualize estes valores ===
+  // cria mapa de grupos por name
+  const groups = {};
+  elements.forEach(el => {
+    if (!el.name) return;
+    if (!groups[el.name]) groups[el.name] = [];
+    groups[el.name].push(el);
+  });
+
+  elements.forEach(el => {
+    if (el.disabled) return;
+    if (!el.required) return;
+
+    // evita duplicar grupo
+    if (seen.has(el.name)) return;
+
+    const group = groups[el.name] && groups[el.name].length > 1;
+
+    if (group && (el.type === 'checkbox' || el.type === 'radio')) {
+      const anyChecked = groups[el.name].some(g => g.checked);
+      if (!anyChecked) {
+        // tenta achar label representativa, ex: .area-title ou label do primeiro elemento
+        const first = groups[el.name][0];
+        let label = 'Selecione uma opção';
+        const areaAncestor = first.closest('.area-card');
+        if (areaAncestor) {
+          const title = areaAncestor.querySelector('.area-title');
+          if (title) label = title.textContent.trim();
+        } else {
+          label = findLabelText(first);
+        }
+        missing.push(label);
+      }
+      seen.add(el.name);
+      return;
+    }
+
+    // caso normal (input/select/textarea)
+    if (!el.checkValidity()) {
+      missing.push(findLabelText(el));
+      seen.add(el.name || el.id || el);
+    }
+  });
+
+  return missing;
+}
+
+/* =================== SUBMIT (COM VALIDAÇÃO AMPLIADA) =================== */
+
+/* === Atualize estes valores === */
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrGZi7wbnyRrBx2-kMiVkd6K_GCteJMQmeHiWWjZHYJJKfKtnsahukM8Wn_9q6wId-/exec'; // <<< cole a URL do seu deploy
 const CLIENT_TOKEN = 'vG3w7x_9Z'; // <<< cole o token se configurou; se não usar, deixe '' e defina USE_TOKEN=false no Apps Script
 
-// === handler de submit (corrigido) ===
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-  msg.innerHTML='';
+  msg.innerHTML = '';
 
-  if (!form.checkValidity()){
-    msg.innerHTML = '<div class="error">Por favor preencha os campos obrigatórios.</div>';
+  // checagem de requireds com lista amigável
+  const missing = getMissingRequireds(form);
+  if (missing.length > 0) {
+    const listHtml = missing.map(m => `<li>${m}</li>`).join('');
+    msg.innerHTML = `<div class="error"><strong>Faltam campos obrigatórios:</strong><ul style="margin:8px 0 0 18px;padding:0">${listHtml}</ul></div>`;
+
+    // foca no primeiro campo faltante
+    const firstLabelText = missing[0];
+
+    // busca label que comece com esse texto (preferencialmente)
+    let firstField = Array.from(form.querySelectorAll('label')).find(l => {
+      return l.textContent && l.textContent.trim().startsWith(firstLabelText);
+    });
+
+    if (firstField) {
+      const forId = firstField.getAttribute('for');
+      if (forId) {
+        const target = document.getElementById(forId);
+        if (target) { target.focus(); return; }
+      }
+      const innerInput = firstField.querySelector('input,select,textarea');
+      if (innerInput) { innerInput.focus(); return; }
+    }
+
+    // se não achou por label, tenta achar um elemento inválido no form
+    const firstInvalid = form.querySelector(':invalid');
+    if (firstInvalid) {
+      try { firstInvalid.focus(); } catch (err) {}
+    }
     return;
   }
 
+  // --- resto do submit (mantive sua lógica original de envio) ---
   const data = {};
   const fm = new FormData(form);
   for (const [k,v] of fm.entries()){
@@ -417,7 +515,6 @@ form.addEventListener('submit', async (e) => {
 
   data._submitted_at = new Date().toISOString();
   if (filePayload) data.arquivo_base64 = filePayload;
-  // token anti-spam (opcional)
   if (CLIENT_TOKEN && CLIENT_TOKEN.length > 0) data._client_token = CLIENT_TOKEN;
 
   // === envio (URLSearchParams para evitar preflight) ===
@@ -471,7 +568,7 @@ form.addEventListener('submit', async (e) => {
 });
 // === fim handler ===
 
-function clearAreasAndServices(){ areasContainer.innerHTML=''; areasContainer.style.display = ''; }
+/* Limpar / Reset */
 limpar.addEventListener('click', ()=>{
   form.reset();
   clearAreasAndServices();
@@ -480,16 +577,15 @@ limpar.addEventListener('click', ()=>{
   logoWrapper.style.display = '';
 });
 
+/* Política de privacidade (demo) */
 document.getElementById('policyLink').addEventListener('click', (ev)=>{
   ev.preventDefault();
   alert('Política de Privacidade: Seus dados serão usados somente para análise de pré-cadastro. Não compartilharemos dados sem consentimento.');
 });
 
+/* Inicialização: se já tiver um tipo selecionado */
 if (tipo.value === 'cliente') {
   logoWrapper.style.display = 'none';
-}
-
-if (tipo.value === 'cliente') {
   descricaoWrapper.style.display = 'none';
 } else {
   descricaoWrapper.style.display = '';
@@ -499,3 +595,27 @@ if (tipo.value){
   renderAreasForType(tipo.value);
   renderOtherFields(tipo.value);
 }
+
+/* On type change: show/hide logo, render areas/fields */
+tipo.addEventListener('change', (e)=>{
+  const t = e.target.value;
+
+  // cliente doesn't see logo & descricao
+  if (t === 'cliente') {
+    logoWrapper.style.display = 'none';
+    descricaoWrapper.style.display = 'none';
+  } else {
+    logoWrapper.style.display = '';
+    descricaoWrapper.style.display = '';
+  }
+
+  if (!t){
+    clearAreasAndServices();
+    dynamic.innerHTML = '';
+    areasContainer.style.display = '';
+    return;
+  }
+
+  renderAreasForType(t);
+  renderOtherFields(t);
+});
