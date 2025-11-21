@@ -8,6 +8,25 @@ const areasContainer = document.getElementById('areasContainer');
 const logoWrapper = document.getElementById('logoWrapper');
 const descricaoWrapper = document.getElementById('descricaoWrapper');
 
+function capitalizeServiceName(text) {
+  const conectivos = [
+    'de','da','do','das','dos',
+    'em','para','com','por','sem','sob',
+    'e','ou','a','o','as','os'
+  ];
+
+  return text
+    .toLowerCase()
+    .split(' ')
+    .map((w, i) => {
+      return (i !== 0 && conectivos.includes(w))
+        ? w
+        : w.charAt(0).toUpperCase() + w.slice(1);
+    })
+    .join(' ');
+}
+
+
 const AREAS = ['SAÚDE','ESTÉTICA','BEM-ESTAR','COMPORTAMENTAL','VIDA','SEGURANÇA','OUTROS'];
 
 const SERVICES = {
@@ -117,7 +136,8 @@ function renderAreasForType(type){
       // caption
       const span = document.createElement('span');
       span.className='service-caption';
-      span.textContent = svc;
+      span.textContent = capitalizeServiceName(svc);
+
 
       // structure: label > input + box + caption
       chip.appendChild(input);
