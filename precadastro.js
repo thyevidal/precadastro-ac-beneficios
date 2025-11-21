@@ -30,13 +30,13 @@ function capitalizeServiceName(text) {
 const AREAS = ['SAÚDE','ESTÉTICA','BEM-ESTAR','COMPORTAMENTAL','VIDA','SEGURANÇA','OUTROS'];
 
 const SERVICES = {
-  'SAÚDE': ['Vacinas Obrigatórias','Vacinas','Alimento Natural','Fisioterapia','Internação','Cirurgia','Exames Laboratoriais','Exame de Imagem','Castração'],
-  'ESTÉTICA': ['Grooming'],
-  'BEM-ESTAR': ['Spar','Táxi Pet','Pet Walker','Pet Sitter','Hospedagem','Creche'],
-  'COMPORTAMENTAL': ['Obediência','Xixi Coco Legal','Passeio','Socialização','Exposições'],
+  'SAÚDE': ['Vacinas Obrigatórias','Vacinas','Alimento Natural','Fisioterapia','Internação','Cirurgia','Exames Laboratoriais','Exame de Imagem','Castração', 'Serviços Ambulatoriais', 'Odontologia Veterinária', 'Internação', 'Atendimento Domiciliar'],
+  'ESTÉTICA': ['Grooming', 'Banho e Tosa', 'Higienização', 'Corte de Unhas', 'Limpeza de Ouvidos', 'Hidratação e Tratamentos Especiais'],
+  'BEM-ESTAR': ['Spar','Pet Walker','Pet Sitter','Hospedagem','Creche', 'Day Care', 'Fitness e Exercícios', 'Terapias Alternativas'],
+  'COMPORTAMENTAL': ['Avaliação Comportamental','Adestramento - Básico','Adestramento - Avançado','Modificação do Comportamento','Treinamento de Filhotes (Puppy Class)','Educação Ambienta','Consultoria Comportamental Especializada','Treinamentos Especifícos'],
   'VIDA': ['Seguro Pet','Auxílio Funerário'],
-  'SEGURANÇA': ['Microchipagem','Monitoramento de Saúde','Rastreamento'],
-  'OUTROS': ['Rnsaio Totográfico Pet']
+  'SEGURANÇA': ['Identificação e Rastreabilidade','Monitoramento Rastreio','Controle de Acesso e Proteção em Casa', 'Tranporte Seguro', 'Serviço de Busca e Resgate', 'Planos de Emergência'],
+  'OUTROS': ['Ensaio Fotográfico Pet']
 };
 
 const fieldsByType = {
